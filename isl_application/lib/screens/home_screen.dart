@@ -1,212 +1,191 @@
-// screens/home_screen.dart
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:isl_application/services/video_service.dart';
-import 'package:isl_application/widgets/sign_video_player.dart';
-import 'package:video_player/video_player.dart';
-import '../services/speech_service.dart';
-import '../widgets/custom_button.dart';
+import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-} // screens/home_screen.dart
-class _HomeScreenState extends State<HomeScreen> {
-  final SpeechService _speechService = SpeechService();
-  String _transcribedText = '';
-  bool _isListening = false;
-  bool _isShowingSign = false;
-  bool _isInitialized = false;
-  VideoPlayerController? _videoController;
-  int _currentWordIndex = 0;
-  List<String> _wordsToPlay = [];
+class HomeScreen extends StatelessWidget {
+  final VoidCallback onThemeToggle;
+  final bool isDarkMode;
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeSpeech();
-    _debugCheckVideoAssets(); // Add this to verify video assets
-  }
+  HomeScreen({
+    super.key,
+    required this.onThemeToggle,
+    required this.isDarkMode,
+  });
 
-  void _debugCheckVideoAssets() async {
-    final videoPath = VideoService.getVideoPathForWord('hello');
-    print('Debug: Checking video path: $videoPath');
-    
-    if (videoPath != null) {
-      try {
-        final controller = VideoPlayerController.asset(videoPath);
-        await controller.initialize();
-        print('Debug: Video successfully loaded!');
-        controller.dispose();
-      } catch (e) {
-        print('Debug: Error loading video: $e');
-      }
-    }
-  }
-
-  Future<void> _initializeSpeech() async {
-    try {
-      final initialized = await _speechService.initialize();
-      setState(() {
-        _isInitialized = initialized;
-      });
-    } catch (e) {
-      print('Error during initialization: $e');
-    }
-  }
-
-  void _startListening() async {
-    if (!_isInitialized) {
-      final initialized = await _speechService.initialize();
-      if (!initialized) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Speech recognition not available'),
-            backgroundColor: Colors.red,
+  // List of menu items for our grid.
+  final List<MenuItem> menuItems = [
+    MenuItem(
+      'Audio-to-ISL',
+      Icons.mic,
+      Colors.blue,
+      // onTap callback receives the BuildContext.
+      (context) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VoiceToISLScreen(),
           ),
         );
-        return;
-      }
-    }
-
-    setState(() => _isListening = true);
-    
-    await _speechService.startListening(
-      onResult: (text) {
-        setState(() => _transcribedText = text);
       },
-      onError: (error) {
-        print('Error: $error');
-        setState(() => _isListening = false);
-      },
-    );
-  }
-
-  void _stopListening() async {
-    await _speechService.stopListening();
-    setState(() => _isListening = false);
-    
-    if (_transcribedText.isNotEmpty) {
-      print('Transcribed text: $_transcribedText');
-      _processAndShowSigns();
-    }
-  }
-
-  void _processAndShowSigns() async {
-    final words = VideoService.processText(_transcribedText);
-    print('Debug: Words to process: $words');
-    
-    if (words.isEmpty) {
-      print('Debug: No matching words found');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No sign language videos found for these words')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isShowingSign = true;
-      _wordsToPlay = words;
-      _currentWordIndex = 0;
-    });
-
-    _playNextWord();
-  }
-
-  void _playNextWord() async {
-    if (_currentWordIndex >= _wordsToPlay.length) {
-      setState(() {
-        _isShowingSign = false;
-        _videoController?.dispose();
-        _videoController = null;
-      });
-      return;
-    }
-
-    final videoPath = VideoService.getVideoPathForWord(_wordsToPlay[_currentWordIndex]);
-    print('Debug: Playing video path: $videoPath');
-
-    if (videoPath == null) {
-      _currentWordIndex++;
-      _playNextWord();
-      return;
-    }
-
-    try {
-      _videoController?.dispose();
-      _videoController = VideoPlayerController.asset(videoPath);
-      
-      await _videoController!.initialize();
-      setState(() {}); // Trigger rebuild after initialization
-      
-      _videoController!.addListener(() {
-        if (_videoController!.value.position >= _videoController!.value.duration) {
-          _currentWordIndex++;
-          _playNextWord();
-        }
-      });
-      
-      _videoController!.play();
-    } catch (e) {
-      print('Debug: Error playing video: $e');
-      _currentWordIndex++;
-      _playNextWord();
-    }
-  }
-
-  @override
-  void dispose() {
-    _videoController?.dispose();
-    super.dispose();
-  }
+    ),
+    MenuItem(
+      'Text-to-ISL',
+      Icons.keyboard,
+      Colors.green,
+      // For now, show a snackbar as a placeholder.
+      (context) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Text-to-ISL tapped')),
+      ),
+    ),
+    MenuItem(
+      'Camera-to-ISL',
+      Icons.camera_alt,
+      Colors.orange,
+      // For now, show a snackbar as a placeholder.
+      (context) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Camera-to-ISL tapped')),
+      ),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('ISL Translator'),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+      // Add a drawer to the Scaffold.
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
-            CustomButton(
-              onPressed: _isInitialized ? 
-                (_isListening ? _stopListening : _startListening) : null,
-              isListening: _isListening,
-              isEnabled: _isInitialized,
-            ),
-            
-            SizedBox(height: 20),
-            
-            if (_transcribedText.isNotEmpty)
-              Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[800] : Colors.blue,
+              ),
+              child: Center(
                 child: Text(
-                  _transcribedText,
-                  style: TextStyle(fontSize: 18),
-                  textAlign: TextAlign.center,
+                  'MENU ',
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        color: Colors.white,
+                      ),
                 ),
               ),
-            
-            SizedBox(height: 20),
-            
-            if (_isShowingSign && _videoController != null && _videoController!.value.isInitialized)
-              Container(
-                height: 300, // Fixed height for video container
-                child: AspectRatio(
-                  aspectRatio: _videoController!.value.aspectRatio,
-                  child: VideoPlayer(_videoController!),
-                ),
-              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.info),
+              title: Text('About'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.settings),
+              title: Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
           ],
         ),
       ),
+      appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+        title: Text(
+          'SIGNIFY',
+          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: onThemeToggle,
+          ),
+          const SizedBox(width: 10),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+          colors: isDarkMode
+              ? [Colors.grey[900]!, Colors.black]
+              : [Colors.blue[100]!, Colors.white],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        )),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: GridView.builder(
+            itemCount: menuItems.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 1,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1.8,
+            ),
+            itemBuilder: (context, index) {
+              final item = menuItems[index];
+              return Material(
+                elevation: 4,
+                borderRadius: BorderRadius.circular(16),
+                color: Theme.of(context).cardColor,
+                child: InkWell(
+                  onTap: () => item.ontap(context),
+                  borderRadius: BorderRadius.circular(16),
+                  splashColor: item.color.withOpacity(0.3),
+                  child: Container(
+                    padding: const EdgeInsets.all(16.0),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                          color: item.color.withOpacity(0.5), width: 1.5),
+                      color: item.color.withOpacity(0.1),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(item.icon, size: 50, color: item.color),
+                        const SizedBox(height: 12),
+                        Text(
+                          item.title,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: item.color.darken(),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
     );
+  }
+}
+
+class MenuItem {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final Function(BuildContext) ontap;
+
+  const MenuItem(this.title, this.icon, this.color, this.ontap);
+}
+
+extension ColorAdjustment on Color {
+  Color darken([double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+    final hsl = HSLColor.fromColor(this);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    return hslDark.toColor();
   }
 }

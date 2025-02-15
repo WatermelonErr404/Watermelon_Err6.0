@@ -1,21 +1,49 @@
-// main.dart
+// ignore_for_file: library_private_types_in_public_api
+
 import 'package:flutter/material.dart';
-import 'package:isl_application/screens/home_screen.dart';
+import 'package:isl_application/screens/onboarding_screen.dart';
+import 'package:isl_application/theme/app_theme.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(ISLBridgeApp());
 }
 
-class MyApp extends StatelessWidget {
+class ISLBridgeApp extends StatefulWidget {
+  const ISLBridgeApp({super.key});
+
+  @override
+  _ISLBridgeAppState createState() => _ISLBridgeAppState();
+}
+
+class _ISLBridgeAppState extends State<ISLBridgeApp> {
+  final ValueNotifier<ThemeData> currentTheme =
+      ValueNotifier(AppTheme.lightTheme);
+
+  void toggleTheme() {
+    if (currentTheme.value.brightness == Brightness.light) {
+      currentTheme.value = AppTheme.darkTheme;
+    } else {
+      currentTheme.value = AppTheme.lightTheme;
+    }
+  }
+
+  bool get isDarkMode => currentTheme.value.brightness == Brightness.dark;
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'ISL Translator',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-      ),
-      home: HomeScreen(),
+    return ValueListenableBuilder<ThemeData>(
+      valueListenable: currentTheme,
+      builder: (context, theme, _) {
+        return MaterialApp(
+          title: 'ISL Bridge',
+          theme: theme,
+          debugShowCheckedModeBanner: false,
+          home: OnboardingScreen(
+            toggleTheme: toggleTheme,
+            isDarkMode: isDarkMode,
+          ),
+        );
+      },
     );
   }
 }
