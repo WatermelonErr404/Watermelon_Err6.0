@@ -1,6 +1,6 @@
 // main.dart
 import 'package:flutter/material.dart';
-import 'package:isl_application/screens/home_screen.dart';
+import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomeScreen(),
+      home: VoiceToISLScreen(),
     );
   }
 }

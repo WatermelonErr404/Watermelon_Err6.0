@@ -1,11 +1,11 @@
 // services/speech_service.dart
+import 'package:isl_application/utils/language_utils.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
+// services/speech_service.dart
 class SpeechService {
   final SpeechToText _speech = SpeechToText();
   bool _isInitialized = false;
 
-  // Check if initialized
   bool get isInitialized => _isInitialized;
 
   Future<bool> initialize() async {
@@ -26,21 +26,20 @@ class SpeechService {
   Future<void> startListening({
     required Function(String) onResult,
     required Function(String) onError,
+    required AppLanguage language,
   }) async {
     if (!_isInitialized) {
-      // Try to initialize again if not initialized
-      final initialized = await initialize();
-      if (!initialized) {
-        onError('Failed to initialize speech recognition');
-        return;
-      }
+      onError('Speech recognition not initialized');
+      return;
     }
+
+    final localeId = language == AppLanguage.english ? 'en_US' : 'hi_IN';
 
     try {
       await _speech.listen(
         onResult: (result) => onResult(result.recognizedWords),
         listenFor: Duration(seconds: 30),
-        localeId: 'en_US',
+        localeId: localeId,
         cancelOnError: true,
         partialResults: true,
       );
