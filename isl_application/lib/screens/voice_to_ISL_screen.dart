@@ -1,6 +1,7 @@
 // screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:isl_application/services/video_service.dart';
+import 'package:isl_application/utils/language_utils.dart';
 import 'package:isl_application/widgets/sign_video_player.dart';
 import 'package:video_player/video_player.dart';
 import '../services/speech_service.dart';
@@ -16,10 +17,14 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
   bool _isListening = false;
   bool _isShowingSign = false;
   bool _isInitialized = false;
+  bool _isProcessing = false;
+  bool _isLoadingVideo = false;
+  String _statusMessage = '';
+
   VideoPlayerController? _videoController;
   int _currentWordIndex = 0;
   List<String> _wordsToPlay = [];
-
+  AppLanguage _currentLanguage = AppLanguage.english;
   @override
   void initState() {
     super.initState();
@@ -28,7 +33,8 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
   }
 
   void _debugCheckVideoAssets() async {
-    final videoPath = VideoService.getVideoPathForWord('hello');
+    final videoPath = VideoService.getVideoPathForWord(
+        _wordsToPlay[_currentWordIndex], _currentLanguage);
     print('Debug: Checking video path: $videoPath');
 
     if (videoPath != null) {
@@ -58,26 +64,32 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
     if (!_isInitialized) {
       final initialized = await _speechService.initialize();
       if (!initialized) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Speech recognition not available'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showErrorSnackBar('Speech recognition not available');
         return;
       }
     }
 
-    setState(() => _isListening = true);
+    setState(() {
+      _isListening = true;
+      _statusMessage = 'Listening...';
+    });
 
     await _speechService.startListening(
       onResult: (text) {
-        setState(() => _transcribedText = text);
+        setState(() {
+          _transcribedText = text;
+          _statusMessage = 'Recording...';
+        });
       },
       onError: (error) {
         print('Error: $error');
-        setState(() => _isListening = false);
+        setState(() {
+          _isListening = false;
+          _statusMessage = '';
+        });
+        _showErrorSnackBar(error);
       },
+      language: _currentLanguage,
     );
   }
 
@@ -92,14 +104,19 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
   }
 
   void _processAndShowSigns() async {
-    final words = VideoService.processText(_transcribedText);
-    print('Debug: Words to process: $words');
+    setState(() {
+      _isProcessing = true;
+      _statusMessage = 'Processing speech...';
+    });
+
+    final words = VideoService.processText(_transcribedText, _currentLanguage);
 
     if (words.isEmpty) {
-      print('Debug: No matching words found');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No sign language videos found for these words')),
-      );
+      setState(() {
+        _isProcessing = false;
+        _statusMessage = '';
+      });
+      _showErrorSnackBar('No sign language videos found for these words');
       return;
     }
 
@@ -107,6 +124,7 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
       _isShowingSign = true;
       _wordsToPlay = words;
       _currentWordIndex = 0;
+      _statusMessage = 'Loading sign language...';
     });
 
     _playNextWord();
@@ -122,7 +140,8 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
       return;
     }
 
-    final videoPath = VideoService.getVideoPathForWord(_wordsToPlay[_currentWordIndex]);
+    final videoPath = VideoService.getVideoPathForWord(
+        _wordsToPlay[_currentWordIndex], _currentLanguage);
     print('Debug: Playing video path: $videoPath');
 
     if (videoPath == null) {
@@ -139,7 +158,8 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
       setState(() {}); // Trigger rebuild after initialization
 
       _videoController!.addListener(() {
-        if (_videoController!.value.position >= _videoController!.value.duration) {
+        if (_videoController!.value.position >=
+            _videoController!.value.duration) {
           _currentWordIndex++;
           _playNextWord();
         }
@@ -159,27 +179,99 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
     super.dispose();
   }
 
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('ISL Translator'),
         centerTitle: true,
+        actions: [
+          // Language Selector with improved styling
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blue[100]!),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButton<AppLanguage>(
+                value: _currentLanguage,
+                dropdownColor: Colors.white,
+                underline: Container(),
+                icon: Icon(Icons.language, color: Colors.blue),
+                padding: EdgeInsets.symmetric(horizontal: 8),
+                items: AppLanguage.values.map((AppLanguage language) {
+                  return DropdownMenuItem<AppLanguage>(
+                    value: language,
+                    child: Text(
+                      LanguageUtils.getLanguageName(language),
+                      style: TextStyle(
+                        color: Colors.blue[700],
+                        fontWeight: _currentLanguage == language
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (AppLanguage? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _currentLanguage = newValue;
+                      _transcribedText = '';
+                      _isShowingSign = false;
+                      _videoController?.dispose();
+                      _videoController = null;
+                      _statusMessage = '';
+                    });
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CustomButton(
-              onPressed: _isInitialized ?
-                (_isListening ? _stopListening : _startListening) : null,
-              isListening: _isListening,
-              isEnabled: _isInitialized,
+            if (_statusMessage.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Text(
+                  _statusMessage,
+                  style: TextStyle(
+                    color: Colors.blue[700],
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            Center(
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                transform: Matrix4.identity()..scale(_isListening ? 1.1 : 1.0),
+                child: CustomButton(
+                  onPressed: _isInitialized
+                      ? (_isListening ? _stopListening : _startListening)
+                      : null,
+                  isListening: _isListening,
+                  isEnabled: _isInitialized,
+                ),
+              ),
             ),
-
             SizedBox(height: 20),
-
             if (_transcribedText.isNotEmpty)
               Container(
                 padding: EdgeInsets.all(16),
@@ -193,10 +285,10 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-
             SizedBox(height: 20),
-
-            if (_isShowingSign && _videoController != null && _videoController!.value.isInitialized)
+            if (_isShowingSign &&
+                _videoController != null &&
+                _videoController!.value.isInitialized)
               Container(
                 height: 300, // Fixed height for video container
                 child: AspectRatio(
