@@ -1,125 +1,217 @@
 import 'package:flutter/material.dart';
+import 'package:opencv_4/opencv_4.dart';
+import 'package:camera/camera.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'dart:typed_data';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Verify OpenCV is working
+  try {
+    String? version = await Cv2.version();
+    print("OpenCV Version: $version");
+  } catch (e) {
+    print("OpenCV Error: $e");
+  }
+  
+  runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
 
-  // This widget is the root of your application.
+class _MyAppState extends State<MyApp> {
+  CameraController? _cameraController;
+  List<CameraDescription>? _cameras;
+  bool isCameraInitialized = false;
+  bool _isProcessing = false;
+  Uint8List? _processedImage;
+  File? _capturedImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      _cameras = await availableCameras();
+      if (_cameras != null && _cameras!.isNotEmpty) {
+        _cameraController = CameraController(
+          _cameras![0],
+          ResolutionPreset.medium,  // Using medium for better performance
+          imageFormatGroup: ImageFormatGroup.jpeg,
+        );
+        await _cameraController!.initialize();
+        setState(() {
+          isCameraInitialized = true;
+        });
+      }
+    } catch (e) {
+      print("Camera initialization error: $e");
+    }
+  }
+
+  Future<void> _processImage(String imagePath) async {
+    try {
+      // Read the image first
+      Uint8List? imageBytes = await File(imagePath).readAsBytes();
+      
+      // Convert to grayscale
+      Uint8List? grayImage = await Cv2.cvtColor(
+        pathString: imagePath,
+        outputType: Cv2.COLOR_BGR2GRAY,
+      );
+      
+      if (grayImage == null) {
+        print("Failed to convert to grayscale");
+        return;
+      }
+
+      // Save grayscale image temporarily
+      final tempDir = await getTemporaryDirectory();
+      final grayImagePath = '${tempDir.path}/gray_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(grayImagePath).writeAsBytes(grayImage);
+
+      // Apply Gaussian blur
+      Uint8List? blurredImage = await Cv2.gaussianBlur(
+        pathString: grayImagePath,
+        kernelSize: [7, 7],
+        sigmaX: 2.0,
+      );
+      
+      if (blurredImage == null) {
+        print("Failed to apply Gaussian blur");
+        return;
+      }
+
+      // Save blurred image temporarily
+      final blurredImagePath = '${tempDir.path}/blurred_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      await File(blurredImagePath).writeAsBytes(blurredImage);
+
+      // Apply binary threshold
+      Uint8List? thresholdImage = await Cv2.threshold(
+        pathString: blurredImagePath,
+        thresholdValue: 127,
+        maxThresholdValue: 255,
+        thresholdType: Cv2.THRESH_BINARY,
+      );
+      
+      if (thresholdImage == null) {
+        print("Failed to apply threshold");
+        return;
+      }
+
+      // Update UI with processed image
+      setState(() {
+        _processedImage = thresholdImage;
+      });
+
+      print("Image processing completed successfully");
+      
+      // Clean up temporary files
+      try {
+        await File(grayImagePath).delete();
+        await File(blurredImagePath).delete();
+      } catch (e) {
+        print("Error cleaning up temporary files: $e");
+      }
+
+    } catch (e) {
+      print("Image processing error: $e");
+    }
+  }
+
+  Future<void> _captureAndProcessFrame() async {
+    if (!isCameraInitialized || _isProcessing) return;
+
+    try {
+      setState(() => _isProcessing = true);
+
+      // Capture image
+      final XFile image = await _cameraController!.takePicture();
+      print("Image captured: ${image.path}");
+
+      // Save captured image for display
+      setState(() {
+        _capturedImage = File(image.path);
+      });
+
+      // Process the image
+      await _processImage(image.path);
+
+    } catch (e) {
+      print("Frame capture error: $e");
+    } finally {
+      setState(() => _isProcessing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      home: Scaffold(
+        appBar: AppBar(
+          title: Text('Hand Pattern Detection'),
+        ),
+        body: Column(
+          children: [
+            // Camera Preview
+            Expanded(
+              child: isCameraInitialized
+                  ? CameraPreview(_cameraController!)
+                  : Center(child: CircularProgressIndicator()),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            // Processed Image Display
+            if (_processedImage != null)
+              Expanded(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          // Original Image
+                          if (_capturedImage != null)
+                            Expanded(
+                              child: Image.file(_capturedImage!),
+                            ),
+                          // Processed Image
+                          Expanded(
+                            child: Image.memory(_processedImage!),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'Original (Left) vs Processed (Right)',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: _isProcessing ? null : _captureAndProcessFrame,
+          child: _isProcessing 
+              ? CircularProgressIndicator(color: Colors.white)
+              : Icon(Icons.camera),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  @override
+  void dispose() {
+    _cameraController?.dispose();
+    super.dispose();
   }
 }
