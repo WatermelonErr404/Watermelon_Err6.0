@@ -224,8 +224,8 @@ class _TextToISLScreenState extends State<TextToISLScreen> {
               _buildTextInput(isDarkMode),
               const SizedBox(height: 20),
               _buildConvertButton(),
-              const SizedBox(height: 20),
-              if (_isShowingSign) Expanded(child: _buildVideoContainer()),
+              const SizedBox(height: 40),
+              if (_isShowingSign) _buildVideoContainer(),
             ],
           ),
         ),
@@ -324,7 +324,7 @@ class _TextToISLScreenState extends State<TextToISLScreen> {
     }
 
     return SizedBox(
-      height: 10,
+      height: 300,
       width: 400, // Adjust the height as needed
       child: AspectRatio(
         aspectRatio: _videoController!.value.aspectRatio,
