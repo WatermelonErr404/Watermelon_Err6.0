@@ -9,7 +9,10 @@ android {
     namespace = "com.example.isl_application"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
-
+    aaptOptions {
+    noCompress 'tflite'
+    noCompress 'lite'
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
