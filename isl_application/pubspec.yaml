@@ -40,8 +40,11 @@ dependencies:
   provider: ^6.1.2
   camera: ^0.11.1
   permission_handler: ^11.3.1
-  tflite: ^1.1.2
 
+  tflite_flutter: ^0.11.0
+  image_picker: ^1.1.2
+  image: ^4.5.2
+ 
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -67,6 +70,8 @@ flutter:
   assets:
     - assets/
     - assets/images/
+    - assets/sign.tflite
+    - assets/labels.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
