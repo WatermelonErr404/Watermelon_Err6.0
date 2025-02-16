@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 class ISLAnimationScreen extends StatefulWidget {
   final String transcribedText;
 
-  const ISLAnimationScreen({Key? key, required this.transcribedText})
-      : super(key: key);
+  const ISLAnimationScreen({super.key, required this.transcribedText});
 
   @override
   _ISLAnimationScreenState createState() => _ISLAnimationScreenState();

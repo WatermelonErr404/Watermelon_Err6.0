@@ -1,6 +1,5 @@
 // services/video_service.dart
 import 'package:isl_application/utils/language_utils.dart';
-import 'package:video_player/video_player.dart';
 
 // services/video_service.dart
 class VideoService {

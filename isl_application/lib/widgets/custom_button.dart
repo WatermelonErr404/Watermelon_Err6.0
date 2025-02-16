@@ -6,7 +6,7 @@ class CustomButton extends StatelessWidget {
   final bool isListening;
   final bool isEnabled;
 
-  const CustomButton({
+  const CustomButton({super.key, 
     required this.onPressed,
     required this.isListening,
     this.isEnabled = true,

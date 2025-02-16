@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:isl_application/screens/camera_to_ISL_screen.dart';
 import 'package:isl_application/screens/text_to_ISL_screen.dart';
 import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 
@@ -42,9 +43,12 @@ class HomeScreen extends StatelessWidget {
       'Camera-to-ISL',
       Icons.camera_alt,
       Colors.orange,
-      (context) => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Camera-to-ISL tapped')),
-      ),
+      (context) =>  Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CameraToISLScreen(),
+          ),
+        ),
     ),
   ];
 

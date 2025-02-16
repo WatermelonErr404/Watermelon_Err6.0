@@ -4,7 +4,7 @@ import 'package:isl_application/utils/language_utils.dart';
 import 'package:video_player/video_player.dart';
 
 class TextToISLScreen extends StatefulWidget {
-  const TextToISLScreen({Key? key}) : super(key: key);
+  const TextToISLScreen({super.key});
 
   @override
   _TextToISLScreenState createState() => _TextToISLScreenState();
@@ -217,11 +217,7 @@ class _TextToISLScreenState extends State<TextToISLScreen> {
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Text(
                     _statusMessage,
-                    style: TextStyle(
-                      color: Colors.blue[700],
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.displaySmall,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -306,13 +302,14 @@ class _TextToISLScreenState extends State<TextToISLScreen> {
       onPressed: _isProcessing ? null : _processAndShowSigns,
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+        backgroundColor: Colors.blue,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
       child: Text(
         _isProcessing ? 'Converting...' : 'Convert to ISL',
-        style: const TextStyle(fontSize: 16),
+        style: Theme.of(context).textTheme.displaySmall,
       ),
     );
   }
@@ -326,9 +323,13 @@ class _TextToISLScreenState extends State<TextToISLScreen> {
       return const Center(child: Text('Preparing video...'));
     }
 
-    return AspectRatio(
-      aspectRatio: _videoController!.value.aspectRatio,
-      child: VideoPlayer(_videoController!),
+    return SizedBox(
+      height: 10,
+      width: 400, // Adjust the height as needed
+      child: AspectRatio(
+        aspectRatio: _videoController!.value.aspectRatio,
+        child: VideoPlayer(_videoController!),
+      ),
     );
   }
 }

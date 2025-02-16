@@ -2,7 +2,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:isl_application/screens/splash_screen.dart';
-import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 import 'package:isl_application/theme/app_theme.dart';
 
 void main() {

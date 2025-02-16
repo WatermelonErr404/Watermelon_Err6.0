@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:isl_application/home/isl_animation_screen.dart';
 
 class SpeechInputScreen extends StatefulWidget {
+  const SpeechInputScreen({super.key});
+
   @override
   _SpeechInputScreenState createState() => _SpeechInputScreenState();
 }

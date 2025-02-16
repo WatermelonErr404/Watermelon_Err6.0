@@ -178,8 +178,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     // Next / Get Started button.
                     ElevatedButton(
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.all(Colors.blue),
-                        shape: MaterialStateProperty.all(
+                        backgroundColor: WidgetStateProperty.all(Colors.blue),
+                        shape: WidgetStateProperty.all(
                           RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),

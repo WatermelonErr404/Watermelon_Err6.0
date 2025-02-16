@@ -2,13 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:isl_application/services/video_service.dart';
 import 'package:isl_application/utils/language_utils.dart';
-import 'package:isl_application/widgets/sign_video_player.dart';
 import 'package:video_player/video_player.dart';
 import '../services/speech_service.dart';
 import '../widgets/custom_button.dart';
 
 class VoiceToISLScreen extends StatefulWidget {
-  const VoiceToISLScreen({Key? key}) : super(key: key);
+  const VoiceToISLScreen({super.key});
 
   @override
   _VoiceToISLScreenState createState() => _VoiceToISLScreenState();
