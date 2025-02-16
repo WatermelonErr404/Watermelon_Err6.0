@@ -1,25 +1,20 @@
-// ignore_for_file: deprecated_member_use
-
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final VoidCallback onThemeToggle;
-  final bool isDarkMode;
 
   HomeScreen({
     super.key,
     required this.onThemeToggle,
-    required this.isDarkMode,
   });
 
-  // List of menu items for our grid.
   final List<MenuItem> menuItems = [
     MenuItem(
       'Audio-to-ISL',
       Icons.mic,
       Colors.blue,
-      // onTap callback receives the BuildContext.
       (context) {
         Navigator.push(
           context,
@@ -33,55 +28,53 @@ class HomeScreen extends StatelessWidget {
       'Text-to-ISL',
       Icons.keyboard,
       Colors.green,
-      // For now, show a snackbar as a placeholder.
       (context) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Text-to-ISL tapped')),
+        const SnackBar(content: Text('Text-to-ISL tapped')),
       ),
     ),
     MenuItem(
       'Camera-to-ISL',
       Icons.camera_alt,
       Colors.orange,
-      // For now, show a snackbar as a placeholder.
       (context) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Camera-to-ISL tapped')),
+        const SnackBar(content: Text('Camera-to-ISL tapped')),
       ),
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      // Add a drawer to the Scaffold.
       drawer: Drawer(
+        // backgroundColor: Colors.white,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: AssetImage('assets/images/drawer.jpg'),
+                    fit: BoxFit.fitWidth),
                 color: isDarkMode ? Colors.grey[800] : Colors.blue,
               ),
-              child: Center(
-                child: Text(
-                  'MENU ',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        color: Colors.white,
-                      ),
-                ),
-              ),
+              child: Center(child: Text('')),
             ),
             ListTile(
-              leading: Icon(Icons.info),
-              title: Text('About'),
+              leading: const Icon(Icons.info),
+              title: const Text('About'),
               onTap: () {
                 Navigator.pop(context);
+                // Navigate to About screen if needed.
               },
             ),
             ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Settings'),
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
               onTap: () {
                 Navigator.pop(context);
+                // Navigate to Settings screen if needed.
               },
             ),
           ],
@@ -102,6 +95,7 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            // Toggle icon based on current theme.
             icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: onThemeToggle,
           ),
@@ -110,13 +104,14 @@ class HomeScreen extends StatelessWidget {
       ),
       body: Container(
         decoration: BoxDecoration(
-            gradient: LinearGradient(
-          colors: isDarkMode
-              ? [Colors.grey[900]!, Colors.black]
-              : [Colors.blue[100]!, Colors.white],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        )),
+          gradient: LinearGradient(
+            colors: isDarkMode
+                ? [Colors.grey[900]!, Colors.black]
+                : [Colors.blue[100]!, Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: GridView.builder(
@@ -142,7 +137,9 @@ class HomeScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                          color: item.color.withOpacity(0.5), width: 1.5),
+                        color: item.color.withOpacity(0.5),
+                        width: 1.5,
+                      ),
                       color: item.color.withOpacity(0.1),
                     ),
                     child: Column(

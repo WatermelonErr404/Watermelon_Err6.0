@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:isl_application/screens/home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen(
-      {super.key, required this.toggleTheme, required this.isDarkMode});
+  const OnboardingScreen({
+    super.key,
+    required this.toggleTheme,
+  });
   final VoidCallback toggleTheme;
-  final bool isDarkMode;
 
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
@@ -42,55 +43,50 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
- void _nextPage() {
-  if (_currentPage < slides.length - 1) {
-    _pageController.animateToPage(
-      _currentPage + 1,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
-  } else {
+  void _nextPage() {
+    if (_currentPage < slides.length - 1) {
+      _pageController.animateToPage(
+        _currentPage + 1,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return HomeScreen(
+              onThemeToggle: widget.toggleTheme,
+            );
+          },
+        ),
+      );
+    }
+  }
+
+  void _skip() {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
           return HomeScreen(
             onThemeToggle: widget.toggleTheme,
-            isDarkMode: widget.isDarkMode,
           );
         },
       ),
     );
   }
-}
-
-void _skip() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) {
-        return HomeScreen(
-          onThemeToggle: widget.toggleTheme,
-          isDarkMode: widget.isDarkMode,
-        );
-      },
-    ),
-  );
-}
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
 
+    // Define a gradient that blends a blue tone with white.
     final List<Color> gradientColors = [
-      // Colors.blue[400]!,
-      // Colors.blue[300]!,
-      // Colors.blue[200]!,
       Colors.blue[200]!,
       Colors.white,
     ];
-
-    final textTheme = theme.textTheme;
 
     return Scaffold(
       body: Container(
@@ -137,8 +133,9 @@ void _skip() {
                           Text(
                             slide.description,
                             textAlign: TextAlign.center,
-                            style: textTheme.displayMedium
-                                ?.copyWith(color: Colors.black),
+                            style: textTheme.displayMedium?.copyWith(
+                              color: Colors.black,
+                            ),
                           ),
                         ],
                       ),
@@ -175,24 +172,23 @@ void _skip() {
                       onPressed: _skip,
                       child: Text(
                         'Skip',
-                        style: textTheme.displaySmall
-                            ?.copyWith(color: Colors.blue),
+                        style: textTheme.displaySmall?.copyWith(color: Colors.blue),
                       ),
                     ),
+                    // Next / Get Started button.
                     ElevatedButton(
                       style: ButtonStyle(
-                          backgroundColor: WidgetStatePropertyAll(Colors.blue),
-                          shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)))),
+                        backgroundColor: MaterialStateProperty.all(Colors.blue),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
                       onPressed: _nextPage,
                       child: Text(
-                        _currentPage == slides.length - 1
-                            ? 'Get Started'
-                            : 'Next',
-                        style: Theme.of(context)
-                            .textTheme
-                            .displaySmall
-                            ?.copyWith(color: Colors.white),
+                        _currentPage == slides.length - 1 ? 'Get Started' : 'Next',
+                        style: textTheme.displaySmall?.copyWith(color: Colors.white),
                       ),
                     ),
                   ],
@@ -219,3 +215,4 @@ class OnboardingSlide {
     required this.icon,
   });
 }
+
