@@ -64,9 +64,7 @@ class HomeScreen extends StatelessWidget {
                     const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
                 textStyle: const TextStyle(fontSize: 18),
               ),
-              onPressed: () {
-               
-              },
+              onPressed: () {},
               child: const Text('Continuous Detection Mode'),
             ),
           ],
@@ -76,7 +74,14 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// Screen for single capture/upload functionality
+// // Screen for single capture/upload functionality
+// import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+// import 'package:tflite_flutter/tflite_flutter.dart';
+// import 'dart:io';
+// import 'package:flutter/services.dart';
+// import 'package:image/image.dart' as img;
+
 class SingleCaptureScreen extends StatefulWidget {
   @override
   _SingleCaptureScreenState createState() => _SingleCaptureScreenState();
@@ -86,7 +91,7 @@ class _SingleCaptureScreenState extends State<SingleCaptureScreen> {
   late Interpreter _interpreter;
   late List<String> _labels;
   File? _image;
-  String _result = '';
+  String _result = 'No sign detected yet.';
   bool _isLoading = false;
 
   @override
@@ -127,7 +132,7 @@ class _SingleCaptureScreenState extends State<SingleCaptureScreen> {
       final imageBytes = await image.readAsBytes();
       final decodedImage = img.decodeImage(imageBytes)!;
       final resizedImage =
-          img.copyResize(decodedImage, width: 224, height: 224);
+          img.copyResize(decodedImage, width: 400, height: 400);
 
       final input = List.generate(
         224,
@@ -170,83 +175,135 @@ class _SingleCaptureScreenState extends State<SingleCaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Single Capture Mode'),
       ),
       body: Stack(
         children: [
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (_image != null)
-                    Container(
-                      height: 300,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDarkMode
+                    ? [Colors.black87, Colors.black]
+                    : [Colors.blue.shade50, Colors.white],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Card(
+                      elevation: 5,
+                      color: isDarkMode ? Colors.grey[900] : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.file(_image!, fit: BoxFit.contain),
-                      ),
-                    )
-                  else
-                    Container(
-                      height: 300,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Center(
-                        child: Text('No image selected'),
+                      child: Container(
+                        height: 300,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: _image != null
+                              ? Image.file(_image!, fit: BoxFit.contain)
+                              : const Center(
+                                  child: Text('No image selected'),
+                                ),
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Detected Sign:',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _result,
-                    style: TextStyle(fontSize: 24),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 30),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Capture'),
-                        onPressed: () => _getImage(ImageSource.camera),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 25,
-                          ),
+                    const SizedBox(height: 20),
+                    Card(
+                      elevation: 4,
+                      color: isDarkMode ? Colors.grey[850] : Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Detected Sign:',
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              _result,
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Upload'),
-                        onPressed: () => _getImage(ImageSource.gallery),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 25,
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.camera_alt),
+                          label: Text(
+                            'Capture',
+                            style: Theme.of(context).textTheme.displaySmall,
+                          ),
+                          onPressed: () => _getImage(ImageSource.camera),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                theme.brightness == Brightness.light
+                                    ? Colors.white
+                                    : theme.secondaryHeaderColor,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 25,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.photo_library),
+                          label: Text(
+                            'Upload',
+                            style: Theme.of(context).textTheme.displaySmall,
+                          ),
+                          onPressed: () => _getImage(ImageSource.gallery),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                theme.brightness == Brightness.light
+                                    ? Colors.white
+                                    : theme.secondaryHeaderColor,
+                            // foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 15,
+                              horizontal: 25,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -254,7 +311,9 @@ class _SingleCaptureScreenState extends State<SingleCaptureScreen> {
             Container(
               color: Colors.black54,
               child: const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                ),
               ),
             ),
         ],
@@ -463,7 +522,7 @@ class _ContinuousCaptureScreenState extends State<ContinuousCaptureScreen>
             flex: 1,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

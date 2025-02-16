@@ -35,7 +35,7 @@ class _ISLBridgeAppState extends State<ISLBridgeApp> {
       valueListenable: currentTheme,
       builder: (context, theme, _) {
         return MaterialApp(
-          title: 'SIGNLIFY',
+          title: 'SIGNIFY',
           theme: theme,
           debugShowCheckedModeBanner: false,
           home: SplashScreen(

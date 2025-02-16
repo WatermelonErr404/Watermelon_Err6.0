@@ -14,8 +14,7 @@ class CameraToISLScreen extends StatefulWidget {
 class _CameraToISLScreenState extends State<CameraToISLScreen> {
   late final List<CameraDescription> cameras;
   @override
-  void initState()  {
-    // TODO: implement initState
+  void initState() {
     super.initState();
     camerainiailize();
   }
@@ -38,7 +37,7 @@ class _CameraToISLScreenState extends State<CameraToISLScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('ISL Bridge'),
+        title: const Text('Camera to ISL'),
       ),
       body: Container(
         decoration: BoxDecoration(

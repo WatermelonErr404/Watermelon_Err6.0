@@ -51,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> {
               // ),
               const SizedBox(height: 100),
               Text(
-                "SIGNLIFY",
+                "SIGNIFY",
                 style: Theme.of(context)
                     .textTheme
                     .displayLarge
