@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:exif/exif.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
@@ -66,13 +65,7 @@ class HomeScreen extends StatelessWidget {
                 textStyle: const TextStyle(fontSize: 18),
               ),
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        ContinuousCaptureScreen(cameras: cameras),
-                  ),
-                );
+               
               },
               child: const Text('Continuous Detection Mode'),
             ),

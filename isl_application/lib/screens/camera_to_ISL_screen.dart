@@ -1,9 +1,29 @@
 // ignore_for_file: file_names
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:isl_application/screens/signLanguage.dart';
 
-class CameraToISLScreen extends StatelessWidget {
+class CameraToISLScreen extends StatefulWidget {
   const CameraToISLScreen({super.key});
+
+  @override
+  State<CameraToISLScreen> createState() => _CameraToISLScreenState();
+}
+
+class _CameraToISLScreenState extends State<CameraToISLScreen> {
+  late final List<CameraDescription> cameras;
+  @override
+  void initState()  {
+    // TODO: implement initState
+    super.initState();
+    camerainiailize();
+  }
+
+  void camerainiailize() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    cameras = await availableCameras();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +64,8 @@ class CameraToISLScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const Placeholder()),
+                        builder: (context) => SingleCaptureScreen(),
+                      ),
                     );
                   },
                   child: Card(
@@ -86,7 +107,9 @@ class CameraToISLScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => const Placeholder()),
+                        builder: (context) =>
+                            ContinuousCaptureScreen(cameras: cameras),
+                      ),
                     );
                   },
                   child: Card(
