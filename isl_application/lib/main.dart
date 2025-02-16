@@ -1,11 +1,12 @@
 // ignore_for_file: library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
-import 'package:isl_application/screens/onboarding_screen.dart';
+import 'package:isl_application/screens/splash_screen.dart';
+import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 import 'package:isl_application/theme/app_theme.dart';
 
 void main() {
-  runApp(ISLBridgeApp());
+  runApp(const ISLBridgeApp());
 }
 
 class ISLBridgeApp extends StatefulWidget {
@@ -35,12 +36,11 @@ class _ISLBridgeAppState extends State<ISLBridgeApp> {
       valueListenable: currentTheme,
       builder: (context, theme, _) {
         return MaterialApp(
-          title: 'ISL Bridge',
+          title: 'SIGNLIFY',
           theme: theme,
           debugShowCheckedModeBanner: false,
-          home: OnboardingScreen(
+          home: SplashScreen(
             toggleTheme: toggleTheme,
-            isDarkMode: isDarkMode,
           ),
         );
       },
