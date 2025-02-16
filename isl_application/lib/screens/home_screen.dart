@@ -8,7 +8,7 @@ import 'package:isl_application/screens/voice_to_ISL_screen.dart';
 class HomeScreen extends StatelessWidget {
   final VoidCallback onThemeToggle;
 
-  HomeScreen({
+   HomeScreen({
     super.key,
     required this.onThemeToggle,
   });
@@ -21,7 +21,7 @@ class HomeScreen extends StatelessWidget {
       (context) {
         Navigator.push(
           context,
-          _createRoute(const VoiceToISLScreen()),
+          _createRoute(VoiceToISLScreen()),
         );
       },
     ),
@@ -32,7 +32,7 @@ class HomeScreen extends StatelessWidget {
       (context) {
         Navigator.push(
           context,
-          _createRoute(const TextToISLScreen()),
+          _createRoute(TextToISLScreen()),
         );
       },
     ),
@@ -43,7 +43,7 @@ class HomeScreen extends StatelessWidget {
       (context) {
         Navigator.push(
           context,
-          _createRoute(const CameraToISLScreen()),
+          _createRoute(CameraToISLScreen()),
         );
       },
     ),
@@ -52,11 +52,10 @@ class HomeScreen extends StatelessWidget {
   // Helper function that creates a slide transition route.
   static Route _createRoute(Widget page) {
     return PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: const Duration(milliseconds: 300),
       reverseTransitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        // Slide from right to left.
         const begin = Offset(1.0, 0.0);
         const end = Offset.zero;
         final tween = Tween(begin: begin, end: end)
@@ -159,39 +158,42 @@ class HomeScreen extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               final item = menuItems[index];
-              return Material(
-                elevation: 0,
-                borderRadius: BorderRadius.circular(16),
-                color: Theme.of(context).cardColor,
-                child: InkWell(
-                  onTap: () => item.ontap(context),
+              return AnimatedGridItem(
+                index: index,
+                child: Material(
+                  elevation: 0,
                   borderRadius: BorderRadius.circular(16),
-                  splashColor: item.color.withOpacity(0.3),
-                  child: Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: item.color.withOpacity(0.5),
-                        width: 1.5,
-                      ),
-                      color: item.color.withOpacity(0.1),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(item.icon, size: 50, color: item.color),
-                        const SizedBox(height: 12),
-                        Text(
-                          item.title,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: item.color.darken(),
-                            fontWeight: FontWeight.w600,
-                          ),
+                  color: Theme.of(context).cardColor,
+                  child: InkWell(
+                    onTap: () => item.ontap(context),
+                    borderRadius: BorderRadius.circular(16),
+                    splashColor: item.color.withOpacity(0.3),
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: item.color.withOpacity(0.5),
+                          width: 1.5,
                         ),
-                      ],
+                        color: item.color.withOpacity(0.1),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(item.icon, size: 50, color: item.color),
+                          const SizedBox(height: 12),
+                          Text(
+                            item.title,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: item.color.darken(),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -217,7 +219,65 @@ extension ColorAdjustment on Color {
   Color darken([double amount = .1]) {
     assert(amount >= 0 && amount <= 1);
     final hsl = HSLColor.fromColor(this);
-    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+    final hslDark =
+        hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
     return hslDark.toColor();
+  }
+}
+
+class AnimatedGridItem extends StatefulWidget {
+  final Widget child;
+  final int index;
+
+  const AnimatedGridItem({
+    Key? key,
+    required this.child,
+    required this.index,
+  }) : super(key: key);
+
+  @override
+  _AnimatedGridItemState createState() => _AnimatedGridItemState();
+}
+
+class _AnimatedGridItemState extends State<AnimatedGridItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+
+    // Start the animation with a delay based on index.
+    Future.delayed(Duration(milliseconds: widget.index * 100), () {
+      if (mounted) {
+        _controller.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: SlideTransition(
+         position: Tween<Offset>(
+           begin: const Offset(0, 0.2),
+           end: Offset.zero,
+         ).animate(_animation),
+         child: widget.child,
+      ),
+    );
   }
 }
