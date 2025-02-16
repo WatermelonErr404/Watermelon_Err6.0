@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:isl_application/screens/about_screen.dart';
 import 'package:isl_application/screens/camera_to_ISL_screen.dart';
 import 'package:isl_application/screens/text_to_ISL_screen.dart';
 import 'package:isl_application/screens/voice_to_ISL_screen.dart';
@@ -14,43 +15,59 @@ class HomeScreen extends StatelessWidget {
 
   final List<MenuItem> menuItems = [
     MenuItem(
-      'Audio-to-ISL',
+      'Audio to SIGN Language',
       Icons.mic,
       Colors.blue,
       (context) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => VoiceToISLScreen(),
-          ),
+          _createRoute(const VoiceToISLScreen()),
         );
       },
     ),
     MenuItem(
-      'Text-to-ISL',
+      'Text to SIGN Language',
       Icons.keyboard,
       Colors.green,
       (context) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => TextToISLScreen(),
-          ),
+          _createRoute(const TextToISLScreen()),
         );
       },
     ),
     MenuItem(
-      'Camera-to-ISL',
+      'Camera to SIGN Language',
       Icons.camera_alt,
       Colors.orange,
-      (context) =>  Navigator.push(
+      (context) {
+        Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => CameraToISLScreen(),
-          ),
-        ),
+          _createRoute(const CameraToISLScreen()),
+        );
+      },
     ),
   ];
+
+  // Helper function that creates a slide transition route.
+  static Route _createRoute(Widget page) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 500),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // Slide from right to left.
+        const begin = Offset(1.0, 0.0);
+        const end = Offset.zero;
+        final tween = Tween(begin: begin, end: end)
+            .chain(CurveTween(curve: Curves.easeInOut));
+        return SlideTransition(
+          position: animation.drive(tween),
+          child: child,
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,30 +75,38 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       drawer: Drawer(
-        // backgroundColor: Colors.white,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
-                image: DecorationImage(
-                    image: AssetImage('assets/images/drawer.jpg'),
-                    fit: BoxFit.fitWidth),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/drawer.jpg'),
+                  fit: BoxFit.fill,
+                ),
                 color: isDarkMode ? Colors.grey[800] : Colors.blue,
               ),
-              child: Center(child: Text('')),
+              child: const Center(child: Text('')),
             ),
             ListTile(
               leading: const Icon(Icons.info),
-              title: const Text('About'),
+              title: Text(
+                'About',
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
               onTap: () {
-                Navigator.pop(context);
-                // Navigate to About screen if needed.
+                Navigator.push(
+                  context,
+                  _createRoute(const AboutScreen()),
+                );
               },
             ),
             ListTile(
               leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+              title: Text(
+                'Settings',
+                style: Theme.of(context).textTheme.displaySmall,
+              ),
               onTap: () {
                 Navigator.pop(context);
                 // Navigate to Settings screen if needed.
@@ -117,7 +142,7 @@ class HomeScreen extends StatelessWidget {
           gradient: LinearGradient(
             colors: isDarkMode
                 ? [Colors.grey[900]!, Colors.black]
-                : [Colors.blue[100]!, Colors.white],
+                : [Colors.white, Colors.white],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -135,7 +160,7 @@ class HomeScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final item = menuItems[index];
               return Material(
-                elevation: 4,
+                elevation: 0,
                 borderRadius: BorderRadius.circular(16),
                 color: Theme.of(context).cardColor,
                 child: InkWell(
@@ -161,7 +186,7 @@ class HomeScreen extends StatelessWidget {
                           item.title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             color: item.color.darken(),
                             fontWeight: FontWeight.w600,
                           ),
