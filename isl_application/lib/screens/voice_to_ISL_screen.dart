@@ -23,7 +23,22 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
   bool _isProcessing = false;
   bool _isLoadingVideo = false;
   String _statusMessage = '';
-
+  final Map<AppLanguage, List<String>> _frequentPhrases = {
+    AppLanguage.english: [
+      'Hello, how are you',
+      'Thank you very much',
+      'Can you help me',
+      'See you later'
+    ],
+    AppLanguage.hindi: [
+      'नमस्ते, कैसे हैं आप',
+      'बहुत बहुत धन्यवाद',
+      'क्या आप मेरी मदद कर सकते हैं',
+      'फिर मिलेंगे'
+    ],
+  };
+  double _playbackSpeed = 1.0;
+  final List<double> _availableSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
   VideoPlayerController? _videoController;
   int _currentWordIndex = 0;
   List<String> _wordsToPlay = [];
@@ -34,6 +49,39 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeSpeech();
+  }
+
+  void _onPhraseSelected(String phrase) {
+    setState(() {
+      _transcribedText = phrase;
+    });
+    _processAndShowSigns();
+  }
+
+  // Add new widget to build frequent phrases
+  Widget _buildFrequentPhrases() {
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: _frequentPhrases[_currentLanguage]!.map((phrase) {
+        return ElevatedButton(
+          onPressed: _isProcessing ? null : () => _onPhraseSelected(phrase),
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.all(12),
+            backgroundColor: Colors.blue[100],
+            foregroundColor: Colors.blue[900],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            phrase,
+            style: const TextStyle(fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -154,14 +202,12 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
   }
 
   Future<void> _playNextWord() async {
-    // Check if we should stop playing
     if (_currentWordIndex >= _wordsToPlay.length) {
       await _cleanupVideo();
       _resetScreen();
       return;
     }
 
-    // Safety check for array bounds
     if (_currentWordIndex < 0 || _wordsToPlay.isEmpty) {
       await _cleanupVideo();
       return;
@@ -172,7 +218,6 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
       _currentLanguage,
     );
 
-    // If video path is null, show a snackbar and proceed to the next word.
     if (videoPath == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -191,20 +236,18 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
     }
 
     try {
-      // Cleanup previous video if any.
       await _cleanupVideo();
-
-      // Initialize new video.
       _videoController = VideoPlayerController.asset(videoPath);
 
       setState(() => _isLoadingVideo = true);
 
       await _videoController!.initialize();
+      // Set the playback speed when initializing the video
+      await _videoController!.setPlaybackSpeed(_playbackSpeed);
 
       if (!mounted) return;
       setState(() => _isLoadingVideo = false);
 
-      // Remove any existing listeners before adding a new one.
       _videoController!.removeListener(_onVideoProgress);
       _videoController!.addListener(_onVideoProgress);
 
@@ -212,7 +255,6 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
       await _videoController!.play();
     } catch (e) {
       debugPrint('Error playing video: $e');
-      // Show snackbar on error during video playback.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -227,6 +269,44 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
       _currentWordIndex++;
       await _playNextWord();
     }
+  }
+
+  Future<void> _onSpeedChanged(double newSpeed) async {
+    setState(() => _playbackSpeed = newSpeed);
+    if (_videoController != null) {
+      await _videoController!.setPlaybackSpeed(newSpeed);
+    }
+  }
+
+  Widget _buildSpeedControl() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.speed, color: Colors.blue),
+            const SizedBox(width: 8),
+            Text(
+              'Playback Speed: ${_playbackSpeed.toStringAsFixed(2)}x',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        Slider(
+          thumbColor: Colors.blue,
+          activeColor: Colors.blue,
+          value: _playbackSpeed,
+          min: _availableSpeeds.first,
+          max: _availableSpeeds.last,
+          divisions: _availableSpeeds.length - 1,
+          label: '${_playbackSpeed.toStringAsFixed(2)}x',
+          onChanged: _isProcessing ? null : _onSpeedChanged,
+        ),
+      ],
+    );
   }
 
   void _onVideoProgress() {
@@ -322,12 +402,38 @@ class _VoiceToISLScreenState extends State<VoiceToISLScreen>
                     textAlign: TextAlign.center,
                   ),
                 ),
+              // Add Frequent Phrases section
+              Padding(
+                padding: const EdgeInsets.only(bottom: 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        _currentLanguage == AppLanguage.english
+                            ? 'Frequent Phrases'
+                            : 'सामान्य वाक्य',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildFrequentPhrases(),
+                  ],
+                ),
+              ),
+
               _buildMicButton(),
               const SizedBox(height: 20),
               if (_transcribedText.isNotEmpty)
                 _buildTranscriptContainer(isDarkMode),
               const SizedBox(height: 20),
               if (_isShowingSign) _buildVideoContainer(),
+              const SizedBox(height: 20),
+              if (_isShowingSign) _buildSpeedControl(),
+              const SizedBox(height: 10),
             ],
           ),
         ),
