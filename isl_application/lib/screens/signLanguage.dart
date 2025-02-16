@@ -7,6 +7,7 @@ import 'package:camera/camera.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
+
 class SignLanguageApp extends StatelessWidget {
   final List<CameraDescription> cameras;
 
@@ -432,21 +433,39 @@ class _ContinuousCaptureScreenState extends State<ContinuousCaptureScreen>
       ),
       body: Column(
         children: [
-          Expanded(
-            flex: 3,
+          ClipRect(
             child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-              ),
-              child: Transform.scale(
-                scale: scale,
-                child: Center(
-                  child: CameraPreview(_cameraController),
+              width: screenSize.width,
+              height: screenSize.height * 0.75,
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: screenSize.width,
+                  height:
+                      screenSize.width * _cameraController.value.aspectRatio,
+                  child: Transform.rotate(
+                    angle: 90 * 3.14159 / 180,
+                    child: CameraPreview(_cameraController),
+                  ),
                 ),
               ),
             ),
           ),
+          // Expanded(
+          //   flex: 3,
+          //   child: Container(
+          //     width: double.infinity,
+          //     decoration: BoxDecoration(
+          //       border: Border.all(color: Colors.grey),
+          //     ),
+          //     child: Transform.scale(
+          //       scale: scale,
+          //       child: Center(
+          //         child: CameraPreview(_cameraController),
+          //       ),
+          //     ),
+          //   ),
+          // ),
           Expanded(
             flex: 1,
             child: Container(
